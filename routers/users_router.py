@@ -6,16 +6,16 @@ from schemas.users import UserResponse, UserRegister, UserUpdate, TokenResponse,
 from core.security import password_hash
 from services import users_service
 from fastapi import status
+from typing import List
 router = APIRouter()
 
-@router.get("/user", tags = ["Users"])
+@router.get("/user", response_model= List[UserResponse],  tags = ["Users"])
 def get_all_users (db:Session = Depends(get_db)):
     return users_service.get_all_users(db)
 
-@router.get("/user/{user_id}", tags = ["Users"])
+@router.get("/user/{user_id}", response_model=UserResponse, tags = ["Users"])
 def get_user (user_id: int, db:Session = Depends(get_db)):
     return users_service.get_user(db, user_id)
-
 
 @router.post("/user", response_model=UserResponse, status_code=status.HTTP_201_CREATED, tags = ["Users"])
 def register_user(newuser: UserRegister, db:Session = Depends(get_db)):
