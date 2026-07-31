@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from database.database import get_db
 from repositories import users_repository
-from schemas.users import UserResponse, UserRegister, UserUpdate
+from schemas.users import UserResponse, UserRegister, UserUpdate, TokenResponse, UserLogin
 from core.security import password_hash
 from services import users_service
 from fastapi import status
@@ -29,3 +29,7 @@ def update_user(user_id: int, updateuser: UserUpdate, db: Session = Depends(get_
 def delete_user(user_id: int, db:Session = Depends(get_db)):
     users_service.delete_user(db, user_id)
     return None
+
+@router.post("/login", response_model=TokenResponse, status_code=status.HTTP_200_OK, tags = ["Users"])
+def login(loginuser: UserLogin, db: Session = Depends(get_db)):
+    return users_service.authenticate_user(db, loginuser)
