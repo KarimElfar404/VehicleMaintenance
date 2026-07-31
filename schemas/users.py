@@ -28,5 +28,12 @@ class UserUpdate(BaseModel):
     address: str | None = None
     blood_type: str | None = None
 
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str
 
 
