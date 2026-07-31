@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field, EmailStr
+from schemas.roles import RoleResponse
 
 class UserRegister(BaseModel):
     name: str
@@ -8,14 +9,17 @@ class UserRegister(BaseModel):
     personal_id: str
     address: str
     blood_type: str
+    role_id: int | None = None
 
 class UserResponse(BaseModel):
+    id: int
     name: str
-    email: str
+    email: EmailStr
     dob: str
     blood_type: str
     personal_id: str
     address: str
+    role: RoleResponse
 
     class Config:
         from_attributes = True
@@ -27,7 +31,7 @@ class UserUpdate(BaseModel):
     personal_id: str | None = None
     address: str | None = None
     blood_type: str | None = None
-
+    role_id: int | None = None
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
