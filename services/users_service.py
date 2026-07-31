@@ -1,0 +1,63 @@
+from sqlalchemy.orm import Session
+from fastapi import HTTPException, status
+from schemas.users import UserRegister, UserUpdate
+from repositories import users_repository
+from core.security import password_hash
+from database.models import User
+
+def register_user(db: Session, newuser:UserRegister):
+    exist_user = users_repository.get_user_by_email(db, newuser.email)
+    if exist_user is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail = "Email is already registered")
+
+    hashed_pwd = password_hash.hash(newuser.hashed_password)
+    user = User(
+        name = newuser.name,
+        email = newuser.email,
+        hashed_password = hashed_pwd,
+        dob = newuser.dob,
+        personal_id = newuser.personal_id,
+        address = newuser.address,
+        blood_type = newuser.blood_type,
+    )
+
+    return users_repository.register_user(db, user)
+
+def get_user(db: Session, user_id: int):
+    user = users_repository.get_user(db, user_id)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="User not found")
+
+    return user
+
+def get_all_users(db: Session):
+    users = users_repository.get_all_users(db)
+    return users
+
+def update_user(db: Session, user_id: int, updateuser: UserUpdate):
+    user = users_repository.get_user(db, user_id)
+
+    if user is None:
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "User not found")
+
+    if updateuser.name is not None:
+        user.name = updateuser.name
+    if updateuser.email is not None:
+        user.email = updateuser.email
+    if updateuser.dob is not None:
+        user.dob = updateuser.dob
+    if updateuser.personal_id is not None:
+        user.personal_id = updateuser.personal_id
+    if updateuser.address is not None:
+        user.address = updateuser.address
+    if updateuser.blood_type is not None:
+        user.blood_type = updateuser.blood_type
+
+    return users_repository.update_user(db, user)
+
+def delete_user(db:Session, user_id: int):
+    user = users_repository.get_user(db, user_id)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = "User not found")
+
+    return users_repository.delete_user(db, user)
