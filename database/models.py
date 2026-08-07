@@ -14,7 +14,8 @@ class User(Base):
     address: Mapped[str]
     blood_type: Mapped[str] = mapped_column(nullable=False)
 
-    role_id: Mapped[int] = mapped_column(ForeignKey("roles.id"), default = 1)
+    
+    role_id: Mapped[int] = mapped_column(ForeignKey("roles.id"), default = 1, nullable = False)
     role: Mapped["Role"] = relationship(back_populates="user")
 
 class Role(Base):
