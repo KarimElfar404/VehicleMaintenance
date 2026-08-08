@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from routers.users_router import router as UserRouter
 from routers.roles_router import router as RoleRouter
+from routers.drivers_router import router as DriverRouter
 from database.database import engine, Base
 
 
@@ -9,3 +10,4 @@ app = FastAPI()
 
 app.include_router(UserRouter)
 app.include_router(RoleRouter)
+app.include_router(DriverRouter)
