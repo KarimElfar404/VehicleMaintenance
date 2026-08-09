@@ -3,6 +3,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 from typing import Optional
+from enum import Enum
 
 
 class User(Base):
@@ -47,9 +48,44 @@ class Driver(Base):
     own_car: Mapped[bool] = mapped_column(nullable=False)
     assigned_vehicle_check: Mapped[bool] = mapped_column(nullable=False)
     assigned_vehicle_id: Mapped[Optional[int]] = mapped_column(
-        nullable=True
-    )  # In future, It will be a relationship with a database class Vehicles
+        ForeignKey("vehicles.id", ondelete="SET NULL"), nullable=True
+    )
+    vehicle: Mapped[Optional["Vehicle"]] = relationship(
+        "Vehicle", back_populates="assigned_driver"
+    )
 
-    vehicle_record_check: Mapped[Optional[bool]] = mapped_column(nullable=True)
-    vehicle_registeration: Mapped[Optional[str]] = mapped_column(nullable=True)
-    vehicle_last_oil_meter: Mapped[Optional[str]] = mapped_column(nullable=True)
+
+class VehicleStatus(str, Enum):
+    ACTIVE = "active"
+    MAINTENANCE = "maintenance"
+    INACTIVE = "inactive"
+
+
+class VehicleAssigned(str, Enum):
+    ASSIGNED = "assigned"
+    NOT_ASSIGNED = "unassigned"
+
+
+class Vehicle(Base):
+    __tablename__ = "vehicles"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    vehicle_make: Mapped[str] = mapped_column(nullable=False)
+    vehicle_model: Mapped[str] = mapped_column(nullable=False)
+    vehicle_color: Mapped[str] = mapped_column(nullable=False)
+    vehicle_year: Mapped[int] = mapped_column(nullable=False)
+    vehicle_plate_number: Mapped[str] = mapped_column(nullable=False)
+    vehicle_status: Mapped[VehicleStatus] = mapped_column(
+        default=VehicleStatus.ACTIVE, nullable=False
+    )
+    vehicle_assigned: Mapped[VehicleAssigned] = mapped_column(
+        default=VehicleAssigned.NOT_ASSIGNED, nullable=False
+    )
+    vehicle_current_mileage: Mapped[int] = mapped_column(nullable=False)
+    vehicle_fuel_type: Mapped[str] = mapped_column(nullable=False)
+    vehicle_record_check: Mapped[bool] = mapped_column(default=False, nullable=False)
+    vehicle_registeration: Mapped[str] = mapped_column(nullable=False)
+    vehicle_last_oil_meter: Mapped[int] = mapped_column(nullable=False)
+    assigned_driver: Mapped[Optional["Driver"]] = relationship(
+        "Driver", back_populates="vehicle", uselist=False
+    )
