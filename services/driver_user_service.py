@@ -1,8 +1,7 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import select
-from repositories import driver_user_repository
-from database.models import Driver, User
-from schemas.drivers import DriverCreate, DriverResponse, DriverUpdate
+from repositories import driver_user_repository, vehicle_repository
+from database.models import Driver, User, VehicleAssigned
+from schemas.drivers import DriverCreate, DriverUpdate
 from fastapi import HTTPException, status
 
 
@@ -22,7 +21,7 @@ def get_driver(db: Session, driver_id: int):
 
 def create_driver(db: Session, newDriver: DriverCreate):
     user = db.get(User, newDriver.user_id)
-    if not User:
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
@@ -34,36 +33,75 @@ def create_driver(db: Session, newDriver: DriverCreate):
             status_code=status.HTTP_400_BAD_REQUEST, detail="User already is a driver"
         )
 
-    newdriver = Driver(**newDriver.model_dump())
+    if newDriver.assigned_vehicle_id is not None:
+        vehicle = vehicle_repository.get_vehicle(db, newDriver.assigned_vehicle_id)
+        if not vehicle:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found"
+            )
 
-    return driver_user_repository.create_driver(db, newdriver)
+        existing_assigned = (
+            db.query(Driver)
+            .filter(Driver.assigned_vehicle_id == newDriver.assigned_vehicle_id)
+            .first()
+        )
+
+        if existing_assigned:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Vehicle is already assigned to another driver",
+            )
+
+    new_driver = Driver(**newDriver.model_dump())
+    return driver_user_repository.create_driver(db, new_driver)
 
 
-def update_driver(db: Session, updateDriver: DriverUpdate, driver_id: int):
+def update_driver(db: Session, update_data: DriverUpdate, driver_id: int):
     driver = driver_user_repository.get_driver(db, driver_id)
     if driver is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found"
         )
 
-    if updateDriver.license_number is not None:
-        driver.license_number = updateDriver.license_number
-    if updateDriver.license_expire is not None:
-        driver.license_expire = updateDriver.license_expire
-    if updateDriver.driving_record_check is not None:
-        driver.driving_record_check = updateDriver.driving_record_check
-    if updateDriver.own_car is not None:
-        driver.own_car = updateDriver.own_car
-    if updateDriver.assigned_vehicle_check is not None:
-        driver.assigned_vehicle_check = updateDriver.assigned_vehicle_check
-    if updateDriver.assigned_vehicle_id is not None:
-        driver.assigned_vehicle_id = updateDriver.assigned_vehicle_id
-    if updateDriver.vehicle_record_check is not None:
-        driver.vehicle_record_check = updateDriver.vehicle_record_check
-    if updateDriver.vehicle_registeration is not None:
-        driver.vehicle_registeration = updateDriver.vehicle_registeration
-    if updateDriver.vehicle_last_oil_meter is not None:
-        driver.vehicle_last_oil_meter = updateDriver.vehicle_last_oil_meter
+    if update_data.assigned_vehicle_id is not None:
+        if update_data.assigned_vehicle_id != driver.assigned_vehicle_id:
+            vehicle = vehicle_repository.get_vehicle(
+                db, update_data.assigned_vehicle_id
+            )
+            if not vehicle:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found"
+                )
+
+            existing_assigned = (
+                db.query(Driver)
+                .filter(
+                    Driver.assigned_vehicle_id == update_data.assigned_vehicle_id,
+                    Driver.id != driver_id,
+                )
+                .first()
+            )
+            if existing_assigned:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Vehicle is already assigned to another driver",
+                )
+
+            if driver.assigned_vehicle_id:
+                old_vehicle = vehicle_repository.get_vehicle(
+                    db, driver.assigned_vehicle_id
+                )
+                if old_vehicle:
+                    old_vehicle.vehicle_assigned = VehicleAssigned.NOT_ASSIGNED
+
+            vehicle.vehicle_assigned = VehicleAssigned.ASSIGNED
+            driver.assigned_vehicle_id = update_data.assigned_vehicle_id
+            driver.assigned_vehicle_check = True
+
+    update_dict = update_data.model_dump(exclude_unset=True)
+    for key, value in update_dict.items():
+        if key != "assigned_vehicle_id":
+            setattr(driver, key, value)
 
     return driver_user_repository.update_driver(db, driver)
 

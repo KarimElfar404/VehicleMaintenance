@@ -1,18 +1,14 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
 
 
 class DriverCreate(BaseModel):
     user_id: int
     license_number: str
     license_expire: str
-    driving_record_check: bool
+    driving_record_check: bool = False
     own_car: bool
-    assigned_vehicle_check: bool
-    assigned_vehicle_id: int
-    vehicle_record_check: bool
-    vehicle_registeration: str
-    vehicle_last_oil_meter: str
+    assigned_vehicle_check: bool = False
+    assigned_vehicle_id: int | None = None
 
 
 class DriverUpdate(BaseModel):
@@ -24,9 +20,6 @@ class DriverUpdate(BaseModel):
     own_car: bool | None = None
     assigned_vehicle_check: bool | None = None
     assigned_vehicle_id: int | None = None
-    vehicle_record_check: bool | None = None
-    vehicle_registeration: str | None = None
-    vehicle_last_oil_meter: str | None = None
 
 
 class UserDriverResponse(BaseModel):
@@ -49,10 +42,7 @@ class DriverResponse(BaseModel):
     driving_record_check: bool
     own_car: bool
     assigned_vehicle_check: bool
-    assigned_vehicle_id: int
-    vehicle_record_check: bool
-    vehicle_registeration: str
-    vehicle_last_oil_meter: str
+    assigned_vehicle_id: int | None = None
 
     class Config:
         from_attributes = True
