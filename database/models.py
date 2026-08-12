@@ -89,3 +89,17 @@ class Vehicle(Base):
     assigned_driver: Mapped[Optional["Driver"]] = relationship(
         "Driver", back_populates="vehicle", uselist=False
     )
+
+class MaintenanceCategory(Base):
+    __tablename__ = "maintenance_categories"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    maintenance_category_name: Mapped[str] = mapped_column(nullable=False)
+    maintenance: Mapped[list["MaintenanceSubcategory"]] = relationship(back_populates="maintenancecategory")
+
+class MaintenanceSubcategory(Base):
+    __tablename__ = "maintenances"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    maintenance_subcategory_name: Mapped[str] = mapped_column(nullable=False)
+    maintenancecategory: Mapped["MaintenanceCategory"] = relationship(back_populates="maintenance")
+    maintenance_category_id: Mapped[int] = mapped_column(ForeignKey("maintenance_categories.id"), nullable=False)
