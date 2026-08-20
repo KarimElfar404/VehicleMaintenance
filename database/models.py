@@ -103,3 +103,25 @@ class MaintenanceSubcategory(Base):
     maintenance_subcategory_name: Mapped[str] = mapped_column(nullable=False)
     maintenancecategory: Mapped["MaintenanceCategory"] = relationship(back_populates="maintenance")
     maintenance_category_id: Mapped[int] = mapped_column(ForeignKey("maintenance_categories.id"), nullable=False)
+
+class TicketStatus(str, Enum):
+    OPEN = "Open"
+    WAITING = "Waiting Reply"
+    CLOSED = "Closed"
+    ACCEPTED = "Accepted"
+    PENDING = "Pending"
+
+class Tickets(Base):
+    __tablename__ = "tickets"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    ticket_status: Mapped[TicketStatus] = mapped_column(default= TicketStatus.OPEN, nullable=False)
+    title: Mapped[str] = mapped_column(nullable=False)
+    description: Mapped[str] = mapped_column(nullable=False)
+    price: Mapped[int] = mapped_column(nullable=False)
+
+    maintenance_category_id: Mapped[int] = mapped_column(ForeignKey("maintenance_categories.id"), nullable=False)
+    maintenance_subcategory_id: Mapped[int] = mapped_column(ForeignKey("maintenances.id"), nullable=False)
+
+    maintenance_category: Mapped[list["MaintenanceCategory"]] = relationship()
+    maintenance_subcategory: Mapped[list["MaintenanceSubcategory"]] = relationship()

@@ -5,6 +5,7 @@ from routers.drivers_router import router as DriverRouter
 from routers.vehicle_router import router as VehicleRouter
 from routers.maintenance_category_router import router as MaintenanceCategoryRouter
 from routers.maintenance_subcategory_router import router as MaintenanceSubcategoryRouter
+from routers.tickets_router import router as TicketRouter
 from database.database import engine, Base
 
 
@@ -17,3 +18,4 @@ app.include_router(DriverRouter)
 app.include_router(VehicleRouter)
 app.include_router(MaintenanceCategoryRouter)
 app.include_router(MaintenanceSubcategoryRouter)
+app.include_router(TicketRouter)
