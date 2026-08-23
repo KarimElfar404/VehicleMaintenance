@@ -19,43 +19,6 @@ def get_driver(db: Session, driver_id: int):
     return driver
 
 
-def create_driver(db: Session, newDriver: DriverCreate):
-    user = db.get(User, newDriver.user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-    existing_driver = (
-        db.query(Driver).filter(Driver.user_id == newDriver.user_id).first()
-    )
-    if existing_driver:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="User already is a driver"
-        )
-
-    if newDriver.assigned_vehicle_id is not None:
-        vehicle = vehicle_repository.get_vehicle(db, newDriver.assigned_vehicle_id)
-        if not vehicle:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found"
-            )
-
-        existing_assigned = (
-            db.query(Driver)
-            .filter(Driver.assigned_vehicle_id == newDriver.assigned_vehicle_id)
-            .first()
-        )
-
-        if existing_assigned:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Vehicle is already assigned to another driver",
-            )
-
-    new_driver = Driver(**newDriver.model_dump())
-    return driver_user_repository.create_driver(db, new_driver)
-
-
 def update_driver(db: Session, update_data: DriverUpdate, driver_id: int):
     driver = driver_user_repository.get_driver(db, driver_id)
     if driver is None:

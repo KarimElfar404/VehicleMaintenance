@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from schemas.users import UserRegister, UserUpdate, UserLogin, TokenResponse
+from schemas.users import UserRegister, UserUpdate, TokenResponse
+from fastapi.security import OAuth2PasswordRequestForm
 from repositories import users_repository
 from core.security import password_hash, create_access_token
 from database.models import User
@@ -74,10 +75,14 @@ def delete_user(db:Session, user_id: int):
 
     return users_repository.delete_user(db, user)
 
-def authenticate_user(db: Session, loginuser: UserLogin) -> TokenResponse:
-    user = users_repository.get_user_by_email(db, loginuser.email)
-    if not user or not password_hash.verify(loginuser.password, user.hashed_password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail ="Invalid Email or Password")
+def authenticate_user(db: Session, form_data: OAuth2PasswordRequestForm) -> TokenResponse:
+    user = users_repository.get_user_by_email(db, form_data.username)
+    
+    if not user or not password_hash.verify(form_data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Invalid Email or Password"
+        )
 
     token = create_access_token({"sub": str(user.id)})
-    return TokenResponse(access_token=token, token_type="Bearer")
+    return TokenResponse(access_token=token, token_type="bearer")

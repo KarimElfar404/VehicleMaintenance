@@ -3,9 +3,10 @@ from services import vehicles_service
 from sqlalchemy.orm import Session
 from database.database import get_db
 from schemas.vehicles import VehicleCreate, VehicleUpdate, VehicleResponse
+from schemas.maintenance_history import MaintenanceHistoryResponse
+from repositories import maintenance_history_repository
 from typing import List
-from database.models import Vehicle
-from fastapi import HTTPException, status
+from fastapi import status
 
 router = APIRouter()
 
@@ -18,6 +19,10 @@ def get_all_vehicles(db: Session = Depends(get_db)):
 @router.get("/vehicles/{vehicle_id}", response_model=VehicleResponse, tags=["Vehicles"])
 def get_vehicle(vehicle_id: int, db: Session = Depends(get_db)):
     return vehicles_service.get_vehicle(db, vehicle_id)
+
+@router.get("/vehicles/{vehicle_id}/maintenance_history", response_model=List[MaintenanceHistoryResponse], tags = ["Maintenance History"])
+def get_vehicle_maintenance_history(vehicle_id: int, db: Session = Depends(get_db)):
+    return maintenance_history_repository.get_maintenance_history_by_vehicle_id(db, vehicle_id)
 
 
 @router.post(

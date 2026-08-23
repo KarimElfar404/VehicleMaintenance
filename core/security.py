@@ -2,7 +2,7 @@ from pwdlib import PasswordHash
 from fastapi.security import OAuth2PasswordBearer
 from core.config import settings
 from fastapi import Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from database.database import get_db
 from database.models import User
 import jwt
@@ -38,7 +38,12 @@ def get_current_user(token: str = Depends(oauth2_scheme), db:Session = Depends(g
     except InvalidTokenError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail = "User Not Found")
 
-    user = db.get(User, int(user_id))
+    user = (
+        db.query(User)
+        .options(joinedload(User.driver_profile))
+        .filter(User.id == int(user_id))
+        .first( )
+    )
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = "User Not Found")
 

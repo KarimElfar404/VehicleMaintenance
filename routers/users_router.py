@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from database.database import get_db
-from repositories import users_repository
+from fastapi.security import OAuth2PasswordRequestForm
 from schemas.users import UserResponse, UserRegister, UserUpdate, TokenResponse, UserLogin
 from core.security import password_hash
+from schemas.users import TokenResponse
 from services import users_service
 from fastapi import status
 from typing import List
@@ -31,5 +32,5 @@ def delete_user(user_id: int, db:Session = Depends(get_db)):
     return None
 
 @router.post("/login", response_model=TokenResponse, status_code=status.HTTP_200_OK, tags = ["Users"])
-def login(loginuser: UserLogin, db: Session = Depends(get_db)):
-    return users_service.authenticate_user(db, loginuser)
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    return users_service.authenticate_user(db, form_data)

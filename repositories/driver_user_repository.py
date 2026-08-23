@@ -12,13 +12,6 @@ def get_driver(db: Session, driver_id: int):
     return db.get(Driver, driver_id)
 
 
-def create_driver(db: Session, newDriver: Driver):
-    db.add(newDriver)
-    db.commit()
-    db.refresh(newDriver)
-    return newDriver
-
-
 def delete_driver(db: Session, driver_id: int):
     driver = db.query(Driver).filter(Driver.id == driver_id).first()
     db.delete(driver)

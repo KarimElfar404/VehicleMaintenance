@@ -2,7 +2,7 @@ from .database import Base
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
-from typing import Optional
+from typing import Optional, List
 from enum import Enum
 
 
@@ -90,6 +90,8 @@ class Vehicle(Base):
         "Driver", back_populates="vehicle", uselist=False
     )
 
+    maintenance_history: Mapped[List["MaintenanceHistory"]] = relationship(back_populates="vehicle", cascade="all, delete-orphan")
+
 class MaintenanceCategory(Base):
     __tablename__ = "maintenance_categories"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -120,8 +122,24 @@ class Tickets(Base):
     description: Mapped[str] = mapped_column(nullable=False)
     price: Mapped[int] = mapped_column(nullable=False)
 
+    vehicle_id: Mapped[int] = mapped_column(ForeignKey("vehicles.id"), nullable=False)
+
     maintenance_category_id: Mapped[int] = mapped_column(ForeignKey("maintenance_categories.id"), nullable=False)
     maintenance_subcategory_id: Mapped[int] = mapped_column(ForeignKey("maintenances.id"), nullable=False)
 
     maintenance_category: Mapped[list["MaintenanceCategory"]] = relationship()
     maintenance_subcategory: Mapped[list["MaintenanceSubcategory"]] = relationship()
+
+class MaintenanceHistory(Base):
+    __tablename__ = "maintenance_history"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    vehicle_id: Mapped[int] = mapped_column(ForeignKey("vehicles.id", ondelete="CASCADE"), nullable=False)
+    ticket_id: Mapped[int] = mapped_column(ForeignKey("tickets.id", ondelete="CASCADE"), nullable=False)
+    vehicle: Mapped["Vehicle"] = relationship(back_populates="maintenance_history")
+
+    title: Mapped[str] = mapped_column(nullable=False)
+    description: Mapped[str] = mapped_column(nullable=False)
+    price: Mapped[int] = mapped_column(nullable=False)
+    maintenance_category_name: Mapped[str] = mapped_column(nullable=False)
+    maintenance_subcategory_name: Mapped[str] = mapped_column(nullable=False)
