@@ -2,12 +2,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from database.database import get_db
 from services import driver_user_service
-from database.models import Driver
 from schemas.drivers import (
     DriverUpdate,
-    DriverCreate,
     DriverResponse,
-    UserDriverResponse,
 )
 from typing import List
 from fastapi import status, HTTPException
@@ -24,15 +21,6 @@ def get_all_drivers(db: Session = Depends(get_db)):
 def get_driver(driver_id: int, db: Session = Depends(get_db)):
     return driver_user_service.get_driver(db, driver_id)
 
-
-@router.post(
-    "/driver",
-    response_model=UserDriverResponse,
-    status_code=status.HTTP_201_CREATED,
-    tags=["Drivers"],
-)
-def create_driver(newDriver: DriverCreate, db: Session = Depends(get_db)):
-    return driver_user_service.create_driver(db, newDriver)
 
 
 @router.patch(
