@@ -1,6 +1,7 @@
 from .database import Base
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Date
+from datetime import date
 from sqlalchemy.orm import relationship
 from typing import Optional, List
 from enum import Enum
@@ -135,11 +136,13 @@ class MaintenanceHistory(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     vehicle_id: Mapped[int] = mapped_column(ForeignKey("vehicles.id", ondelete="CASCADE"), nullable=False)
-    ticket_id: Mapped[int] = mapped_column(ForeignKey("tickets.id", ondelete="CASCADE"), nullable=False)
+    ticket_id: Mapped[int] = mapped_column(ForeignKey("tickets.id", ondelete="CASCADE"), nullable=True)
     vehicle: Mapped["Vehicle"] = relationship(back_populates="maintenance_history")
 
-    title: Mapped[str] = mapped_column(nullable=False)
-    description: Mapped[str] = mapped_column(nullable=False)
+    title: Mapped[str] = mapped_column(nullable=True)
+    description: Mapped[str] = mapped_column(nullable=True)
     price: Mapped[int] = mapped_column(nullable=False)
-    maintenance_category_name: Mapped[str] = mapped_column(nullable=False)
-    maintenance_subcategory_name: Mapped[str] = mapped_column(nullable=False)
+    maintenance_category_id: Mapped[int] = mapped_column(ForeignKey("maintenance_categories.id"), nullable=False)
+    maintenance_subcategory_id: Mapped[int] = mapped_column(ForeignKey("maintenances.id"), nullable=False)
+
+    created_at: Mapped[date] = mapped_column(Date, nullable=False, default=date.today)
