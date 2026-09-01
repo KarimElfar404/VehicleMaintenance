@@ -32,9 +32,6 @@ ALLOWED_TRANSITIONS: dict[TicketStatus, set[TicketStatus]] = {
         TicketStatus.WAITING_FOR_CONFIRMATION,
         TicketStatus.CLOSED,
     },
-    TicketStatus.CONFIRMED: {
-        TicketStatus.FIXED
-    },
     TicketStatus.CLOSED: set(),
 }
 
@@ -118,5 +115,4 @@ def update_ticket_status(db: Session, ticket_id: int, new_status: TicketStatus) 
             history_entries.append(history_entry)
         if history_entries:
             maintenance_history_repository.bulk_create_maintenance_entries(db, history_entries)
-        maintenance_history_repository.maintenance_entry_history(db, history_entry)
     return ticket_repository.update_ticket_status(db, ticket)
