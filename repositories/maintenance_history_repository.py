@@ -40,3 +40,7 @@ def delete_manual_maintenance(db: Session, delMaintenance: MaintenanceHistory):
     db.commit()
     return None
 
+def bulk_create_maintenance_entries(db: Session, history_entries: List[MaintenanceHistory]) -> List[MaintenanceHistory]:
+    db.add_all(history_entries)
+    db.commit()
+    return history_entries

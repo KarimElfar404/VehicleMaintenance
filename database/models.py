@@ -1,6 +1,6 @@
 from .database import Base
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import ForeignKey, Date
+from sqlalchemy import ForeignKey, Date, ARRAY, INTEGER, Float, String
 from datetime import date
 from sqlalchemy.orm import relationship
 from typing import Optional, List
@@ -12,26 +12,24 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(nullable=False)
-    email: Mapped[str] = mapped_column(nullable=False)
-    hashed_password: Mapped[str] = mapped_column(nullable=False)
-    dob: Mapped[str] = mapped_column(nullable=False)
-    personal_id: Mapped[str]
+    email: Mapped[str] = mapped_column(unique=True, nullable=False)
+    password: Mapped[str] = mapped_column(nullable=False)
+    dob: Mapped[date] = mapped_column(Date, nullable=False)
+    personal_id: Mapped[str] = mapped_column(unique=True)
     address: Mapped[str]
     blood_type: Mapped[str] = mapped_column(nullable=False)
     role_id: Mapped[int] = mapped_column(
         ForeignKey("roles.id"), default=1, nullable=False
     )
     role: Mapped["Role"] = relationship(back_populates="user")
-    driver_profile: Mapped[Optional["Driver"]] = relationship(
-        back_populates="user", uselist=False
-    )
+    driver_profile = relationship("Driver", back_populates="user", uselist = False)
 
 
 class Role(Base):
     __tablename__ = "roles"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(nullable=False)
+    name: Mapped[str] = mapped_column(unique=True, nullable=False)
     user: Mapped[list["User"]] = relationship(back_populates="role")
 
 
@@ -43,8 +41,8 @@ class Driver(Base):
         ForeignKey("users.id"), unique=True, nullable=False
     )
     user: Mapped["User"] = relationship(back_populates="driver_profile")
-    license_number: Mapped[str] = mapped_column(nullable=False)
-    license_expire: Mapped[str] = mapped_column(nullable=False)
+    license_number: Mapped[str] = mapped_column(unique=True, nullable=False)
+    license_expire: Mapped[date] = mapped_column(Date, nullable=False)
     driving_record_check: Mapped[bool] = mapped_column(nullable=False)
     own_car: Mapped[bool] = mapped_column(nullable=False)
     assigned_vehicle_check: Mapped[bool] = mapped_column(nullable=False)
@@ -74,8 +72,8 @@ class Vehicle(Base):
     vehicle_make: Mapped[str] = mapped_column(nullable=False)
     vehicle_model: Mapped[str] = mapped_column(nullable=False)
     vehicle_color: Mapped[str] = mapped_column(nullable=False)
-    vehicle_year: Mapped[int] = mapped_column(nullable=False)
-    vehicle_plate_number: Mapped[str] = mapped_column(nullable=False)
+    vehicle_year: Mapped[str] = mapped_column(nullable=False)
+    vehicle_plate_number: Mapped[str] = mapped_column(unique=True,nullable=False)
     vehicle_status: Mapped[VehicleStatus] = mapped_column(
         default=VehicleStatus.ACTIVE, nullable=False
     )
@@ -100,7 +98,7 @@ class MaintenanceCategory(Base):
     maintenance: Mapped[list["MaintenanceSubcategory"]] = relationship(back_populates="maintenancecategory")
 
 class MaintenanceSubcategory(Base):
-    __tablename__ = "maintenances"
+    __tablename__ = "maintenance_subcategories"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     maintenance_subcategory_name: Mapped[str] = mapped_column(nullable=False)
@@ -110,9 +108,12 @@ class MaintenanceSubcategory(Base):
 class TicketStatus(str, Enum):
     OPEN = "Open"
     WAITING = "Waiting Reply"
-    CLOSED = "Closed"
+    WAITING_FOR_CONFIRMATION = "Waiting for confirmation"
     ACCEPTED = "Accepted"
     PENDING = "Pending"
+    CONFIRMED = "Confirmed"
+    FIXED = "Fixed"
+    CLOSED = "Closed"
 
 class Tickets(Base):
     __tablename__ = "tickets"
@@ -121,15 +122,24 @@ class Tickets(Base):
     ticket_status: Mapped[TicketStatus] = mapped_column(default= TicketStatus.OPEN, nullable=False)
     title: Mapped[str] = mapped_column(nullable=False)
     description: Mapped[str] = mapped_column(nullable=False)
-    price: Mapped[int] = mapped_column(nullable=False)
+    total_price: Mapped[float] = mapped_column(Float, default = 0.0, nullable=False)
 
     vehicle_id: Mapped[int] = mapped_column(ForeignKey("vehicles.id"), nullable=False)
+    items: Mapped[List["TicketItem"]] = relationship(back_populates="ticket", cascade="all, delete-orphan")
 
+
+
+class TicketItem(Base):
+    __tablename__ = "ticket_items"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    ticket_id: Mapped[int] = mapped_column(ForeignKey("tickets.id", ondelete="CASCADE"), nullable=False)
     maintenance_category_id: Mapped[int] = mapped_column(ForeignKey("maintenance_categories.id"), nullable=False)
-    maintenance_subcategory_id: Mapped[int] = mapped_column(ForeignKey("maintenances.id"), nullable=False)
-
-    maintenance_category: Mapped[list["MaintenanceCategory"]] = relationship()
-    maintenance_subcategory: Mapped[list["MaintenanceSubcategory"]] = relationship()
+    maintenance_subcategory_id: Mapped[int] = mapped_column(ForeignKey("maintenance_subcategories.id"), nullable=False)
+    price: Mapped[float] = mapped_column(Float, nullable=False)
+    item_description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    ticket: Mapped["Tickets"] = relationship(back_populates="items")
+    category: Mapped["MaintenanceCategory"] = relationship()
+    subcategory: Mapped["MaintenanceSubcategory"] = relationship()
 
 class MaintenanceHistory(Base):
     __tablename__ = "maintenance_history"
@@ -141,8 +151,8 @@ class MaintenanceHistory(Base):
 
     title: Mapped[str] = mapped_column(nullable=True)
     description: Mapped[str] = mapped_column(nullable=True)
-    price: Mapped[int] = mapped_column(nullable=False)
+    price: Mapped[float] = mapped_column(Float, nullable=False)
     maintenance_category_id: Mapped[int] = mapped_column(ForeignKey("maintenance_categories.id"), nullable=False)
-    maintenance_subcategory_id: Mapped[int] = mapped_column(ForeignKey("maintenances.id"), nullable=False)
+    maintenance_subcategory_id: Mapped[int] = mapped_column(ForeignKey("maintenance_subcategories.id"), nullable=False)
 
     created_at: Mapped[date] = mapped_column(Date, nullable=False, default=date.today)

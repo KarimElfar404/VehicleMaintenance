@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from repositories import vehicle_repository
 from schemas.vehicles import VehicleCreate, VehicleUpdate
 from fastapi import HTTPException, status
-from database.models import Vehicle
+from database.models import Vehicle, VehicleAssigned, VehicleStatus
 
 
 def get_all_vehicle(db: Session):
@@ -55,4 +55,7 @@ def update_vehicle(db: Session, updateVehicle: VehicleUpdate, vehicle_id: int):
 
 
 def delete_vehicle(db: Session, vehicle_id: int):
-    return vehicle_repository.delete_vehicle(db, vehicle_id)
+    vehicle = vehicle_repository.get_vehicle(db, vehicle_id)
+    if vehicle.status == VehicleStatus.INACTIVE and vehicle.is_assigned == VehicleAssigned.NOT_ASSIGNED:
+        return vehicle_repository.delete_vehicle(db, vehicle)
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail = "Vehicle must be Inactive and Not assigned")
