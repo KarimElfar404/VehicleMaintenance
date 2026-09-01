@@ -1,21 +1,20 @@
 from pydantic import BaseModel, Field, EmailStr
 from schemas.roles import RoleResponse
-
+from datetime import date
 class UserRegister(BaseModel):
     name: str
     email: str
-    hashed_password: str = Field(min_length=8)
-    dob: str
+    password: str = Field(min_length=8)
+    dob: date
     personal_id: str
     address: str
     blood_type: str
-    role_id: int | None = None
 
 class UserResponse(BaseModel):
     id: int
     name: str
     email: EmailStr
-    dob: str
+    dob: date
     blood_type: str
     personal_id: str
     address: str
@@ -27,7 +26,7 @@ class UserResponse(BaseModel):
 class UserUpdate(BaseModel):
     name: str | None = None
     email: EmailStr | None = None
-    dob: str | None = None
+    dob: date | None = None
     personal_id: str | None = None
     address: str | None = None
     blood_type: str | None = None

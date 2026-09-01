@@ -8,35 +8,36 @@ from schemas.drivers import (
 )
 from typing import List
 from fastapi import status, HTTPException
-
+from database.models import User
+from role_permissions import require_permission
 router = APIRouter()
 
 
-@router.get("/driver", response_model=List[DriverResponse], tags=["Drivers"])
-def get_all_drivers(db: Session = Depends(get_db)):
+@router.get("/drivers", response_model=List[DriverResponse], tags=["Drivers"])
+def get_all_drivers(db: Session = Depends(get_db), current_user: User = Depends(require_permission("driver:read"))):
     return driver_user_service.get_all_drivers(db)
 
 
-@router.get("/driver/{driver_id}", response_model=DriverResponse, tags=["Drivers"])
-def get_driver(driver_id: int, db: Session = Depends(get_db)):
-    return driver_user_service.get_driver(db, driver_id)
+@router.get("/drivers/{user_id}", response_model=DriverResponse, tags=["Drivers"])
+def get_driver(user_id: int, db: Session = Depends(get_db), current_user: User = Depends(require_permission("driver:read"))):
+    return driver_user_service.get_driver(db, user_id)
 
 
 
 @router.patch(
-    "/driver/{driver_id}",
+    "/drivers/{user_id}",
     response_model=DriverResponse,
     status_code=status.HTTP_200_OK,
     tags=["Drivers"],
 )
 def update_driver(
-    driver_id: int, updateDriver: DriverUpdate, db: Session = Depends(get_db)
+    user_id: int, updateDriver: DriverUpdate, db: Session = Depends(get_db), current_user: User = Depends(require_permission("driver:update"))
 ):
-    return driver_user_service.update_driver(db, updateDriver, driver_id)
+    return driver_user_service.update_driver(db, updateDriver, user_id)
 
 
 @router.delete(
-    "/driver/{driver_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Drivers"]
+    "/drivers/{driver_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Drivers"]
 )
-def delete_driver(driver_id: int, db: Session = Depends(get_db)):
+def delete_driver(driver_id: int, db: Session = Depends(get_db), current_user: User = Depends(require_permission("driver:delete"))):
     return driver_user_service.delete_driver(db, driver_id)

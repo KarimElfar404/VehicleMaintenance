@@ -4,6 +4,7 @@ from database.models import MaintenanceHistory
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import date
+from typing import List
 
 def create_manual_maintenance(db: Session, vehicle_id: int, newMaintenance: ManualMaintenanceCreate) -> MaintenanceHistory:
     history_entry = MaintenanceHistory(
@@ -35,4 +36,7 @@ def delete_manual_maintenance(db: Session, maintenance_id: int, vehicle_id: int)
             detail="No maintenance record found with this ID"
         )
     return maintenance_history_repository.delete_manual_maintenance(db, maintenance)
+
+def get_maintenance_history_by_vehicle_id(db: Session, vehicle_id: int):
+    return maintenance_history_repository.get_maintenance_history_by_vehicle_id(db, vehicle_id)
     

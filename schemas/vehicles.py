@@ -26,8 +26,6 @@ class VehicleCreate(BaseModel):
     vehicle_record_check: bool
     vehicle_registeration: str
     vehicle_last_oil_meter: int
-    assigned_driver_id: int | None = None
-
 
 class VehicleResponse(BaseModel):
     id: int
@@ -43,8 +41,6 @@ class VehicleResponse(BaseModel):
     vehicle_record_check: bool
     vehicle_registeration: str
     vehicle_last_oil_meter: int
-    assigned_driver_id: int | None = None
-
     class Config:
         from_attributes = True
 
@@ -62,4 +58,3 @@ class VehicleUpdate(BaseModel):
     vehicle_record_check: bool | None = None
     vehicle_registeration: str | None = None
     vehicle_last_oil_meter: int | None = None
-    assigned_driver_id: int | None = None

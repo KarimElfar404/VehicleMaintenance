@@ -1,31 +1,32 @@
 from sqlalchemy.orm import Session
 from repositories import driver_user_repository, vehicle_repository
 from database.models import Driver, User, VehicleAssigned
-from schemas.drivers import DriverCreate, DriverUpdate
+from schemas.drivers import DriverUpdate, DriverResponse
 from fastapi import HTTPException, status
 
 
 def get_all_drivers(db: Session):
-    return driver_user_repository.get_all_drivers(db)
+    users = driver_user_repository.get_all_drivers(db)
+    return [DriverResponse.from_user_model(user) for user in users]
 
 
-def get_driver(db: Session, driver_id: int):
-    driver = driver_user_repository.get_driver(db, driver_id)
-    if driver is None:
+def get_driver(db: Session, user_id: int):
+    user = driver_user_repository.get_driver_by_user_id(db, user_id)
+    if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found"
         )
 
-    return driver
+    return DriverResponse.from_user_model(user)
 
 
-def update_driver(db: Session, update_data: DriverUpdate, driver_id: int):
-    driver = driver_user_repository.get_driver(db, driver_id)
-    if driver is None:
+def update_driver(db: Session, update_data: DriverUpdate, user_id: int):
+    user = driver_user_repository.get_driver_by_user_id(db, user_id)
+    if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found"
         )
-
+    driver = driver_user_repository.create_driver(db, user)
     if update_data.assigned_vehicle_id is not None:
         if update_data.assigned_vehicle_id != driver.assigned_vehicle_id:
             vehicle = vehicle_repository.get_vehicle(
@@ -40,7 +41,7 @@ def update_driver(db: Session, update_data: DriverUpdate, driver_id: int):
                 db.query(Driver)
                 .filter(
                     Driver.assigned_vehicle_id == update_data.assigned_vehicle_id,
-                    Driver.id != driver_id,
+                    Driver.id != driver.id,
                 )
                 .first()
             )
@@ -63,10 +64,13 @@ def update_driver(db: Session, update_data: DriverUpdate, driver_id: int):
 
     update_dict = update_data.model_dump(exclude_unset=True)
     for key, value in update_dict.items():
-        if key != "assigned_vehicle_id":
-            setattr(driver, key, value)
+        if key in ("name","email"):
+            setattr(user,key,value)
+        elif key != "assigned_vehicle_id":
+            setattr(driver,key,value)
+    updated_user = driver_user_repository.update_driver(db, user)
 
-    return driver_user_repository.update_driver(db, driver)
+    return DriverResponse.from_user_model(updated_user)
 
 
 def delete_driver(db: Session, driver_id: int):

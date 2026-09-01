@@ -16,7 +16,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes = 30))
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
         to_encode,
@@ -40,11 +43,14 @@ def get_current_user(token: str = Depends(oauth2_scheme), db:Session = Depends(g
 
     user = (
         db.query(User)
-        .options(joinedload(User.driver_profile))
+        .options(
+            joinedload(User.driver_profile),
+            joinedload(User.role)
+        )
         .filter(User.id == int(user_id))
         .first( )
     )
     if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = "User Not Found")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail = "Invalid Authentication state")
 
     return user

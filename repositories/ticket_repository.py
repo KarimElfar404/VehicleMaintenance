@@ -21,10 +21,6 @@ def update_ticket(db: Session, updateTicket: TicketUpdate):
     db.refresh(updateTicket)
     return updateTicket
 
-def delete_ticket(db: Session, ticket_id: int):
-    db.delete(ticket_id)
-    db.commit()
-    return None
 
 def update_ticket_status(db: Session, updateTicket: Tickets) -> Tickets:
     db.commit()
